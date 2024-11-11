@@ -30,22 +30,22 @@
         user-select: none;
     }
     #circle-red {
-        width: 100px;
-        height: 100px;
+        width: 20%;
+        height: 20%;
         top: 20%;
         left: 30%;
         background-color: red;
     }
     #circle-blue {
-        width: 100px;
-        height: 100px;
+        width: 20%;
+        height: 20%;
         top: 50%;
         left: 20%;
         background-color: blue;
     }
     #circle-green {
-        width: 100px;
-        height: 100px;
+        width: 20%;
+        height: 20%;
         top: 50%;
         left: 60%;
         background-color: green;
@@ -65,9 +65,10 @@
     let startY = 0;
     let startHeight = 0;
 
-    // Function to get the radius of a circle
+    // Function to get the radius of a circle in percentage
     function getRadius(circle) {
-        return parseInt(circle.style.width) / 2;
+        const container = document.getElementById("circle-container");
+        return (parseFloat(circle.style.width) / 100) * container.clientWidth / 2;
     }
 
     // Start resizing the circle
@@ -75,7 +76,7 @@
         if (event.button !== 0) return; // Only left mouse button
         selectedCircle = event.target;
         startY = event.clientY;
-        startHeight = selectedCircle.clientHeight;
+        startHeight = parseFloat(selectedCircle.style.height);
         selectedCircle.style.border = "2px dashed yellow";
         window.addEventListener("mousemove", onMouseMove);
         window.addEventListener("mouseup", onMouseUp);
@@ -86,9 +87,9 @@
     function onMouseMove(event) {
         if (!selectedCircle) return;
         const dy = event.clientY - startY;
-        const newSize = Math.max(20, startHeight + dy);
-        selectedCircle.style.width = `${newSize}px`;
-        selectedCircle.style.height = `${newSize}px`;
+        const newSize = Math.max(5, startHeight + (dy / window.innerHeight) * 100);
+        selectedCircle.style.width = `${newSize}%`;
+        selectedCircle.style.height = `${newSize}%`;
     }
 
     // End resizing and send data to Qualtrics
