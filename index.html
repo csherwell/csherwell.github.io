@@ -105,22 +105,29 @@
 </html>
 
 <script>
-    function sendRadiusData() {
-        const container = document.getElementById("circle-container");
-        const redRadius = document.getElementById("circle-red").clientWidth / 2;
-        const blueRadius = document.getElementById("circle-blue").clientWidth / 2;
-        const greenRadius = document.getElementById("circle-green").clientWidth / 2;
+    // Function to get the radius of a circle using getBoundingClientRect()
+    function getCircleRadius(circle) {
+        const rect = circle.getBoundingClientRect();
+        return rect.width / 2;
+    }
 
-        // Prepare the data message
+    // Function to send the radius data to the parent Qualtrics survey
+    function sendRadiusData() {
+        const redCircle = document.getElementById("circle-red");
+        const blueCircle = document.getElementById("circle-blue");
+        const greenCircle = document.getElementById("circle-green");
+
+        const redRadius = getCircleRadius(redCircle);
+        const blueRadius = getCircleRadius(blueCircle);
+        const greenRadius = getCircleRadius(greenCircle);
+
         const message = {
-            redRadius: redRadius,
-            blueRadius: blueRadius,
-            greenRadius: greenRadius
+            redRadius: redRadius || 0,
+            blueRadius: blueRadius || 0,
+            greenRadius: greenRadius || 0
         };
 
-        console.log("Sending message to parent:", message);
-
-        // Send the message to the parent Qualtrics page
+        console.log("Sending radius data to parent:", message);
         window.parent.postMessage(message, "*");
     }
 
@@ -135,6 +142,21 @@
         // Send the radius data to Qualtrics
         sendRadiusData();
     }
+
+    // Explicitly set the initial size of the circles in JavaScript
+    document.addEventListener("DOMContentLoaded", () => {
+        const redCircle = document.getElementById("circle-red");
+        const blueCircle = document.getElementById("circle-blue");
+        const greenCircle = document.getElementById("circle-green");
+
+        redCircle.style.width = "100px";
+        redCircle.style.height = "100px";
+        blueCircle.style.width = "100px";
+        blueCircle.style.height = "100px";
+        greenCircle.style.width = "100px";
+        greenCircle.style.height = "100px";
+    });
 </script>
+
 
 
