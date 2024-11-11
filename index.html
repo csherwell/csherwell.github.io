@@ -10,16 +10,15 @@
         justify-content: center;
         align-items: center;
         height: 100vh;
-        background-color: #f0f0f0;
         margin: 0;
+        background-color: #f0f0f0;
     }
     #circle-container {
         position: relative;
-        width: 100%;
+        width: 90vw;
+        height: 90vw;
         max-width: 500px;
-        height: 100%;
         max-height: 500px;
-        aspect-ratio: 1;
         border: 1px solid #ccc;
         background-color: #fff;
     }
@@ -28,24 +27,25 @@
         border-radius: 50%;
         cursor: pointer;
         user-select: none;
+        transition: width 0.2s, height 0.2s;
     }
     #circle-red {
-        width: 20%;
-        height: 20%;
+        width: 100px;
+        height: 100px;
         top: 20%;
-        left: 50%;
+        left: 30%;
         background-color: red;
     }
     #circle-blue {
-        width: 20%;
-        height: 20%;
+        width: 100px;
+        height: 100px;
         top: 50%;
         left: 20%;
         background-color: blue;
     }
     #circle-green {
-        width: 20%;
-        height: 20%;
+        width: 100px;
+        height: 100px;
         top: 50%;
         left: 60%;
         background-color: green;
@@ -63,53 +63,39 @@
 <script>
     let selectedCircle = null;
     let startY = 0;
-    let startSize = 0;
+    let initialSize = 0;
 
-    // Function to start resizing the circle
+    // Start resizing the circle
     function onMouseDown(event) {
-        if (event.button !== 0) return; // Only respond to left mouse button
+        if (event.button !== 0) return; // Only left mouse button
         selectedCircle = event.target;
         startY = event.clientY;
-        startSize = parseFloat(selectedCircle.style.width);
+        initialSize = selectedCircle.clientWidth;
         selectedCircle.style.border = "2px dashed yellow";
         window.addEventListener("mousemove", onMouseMove);
         window.addEventListener("mouseup", onMouseUp);
         event.preventDefault();
     }
 
-    // Function to resize the circle
+    // Resize the circle
     function onMouseMove(event) {
         if (!selectedCircle) return;
         const dy = event.clientY - startY;
-        const newSize = Math.max(10, startSize + (dy / window.innerHeight) * 100);
-        selectedCircle.style.width = `${newSize}%`;
-        selectedCircle.style.height = `${newSize}%`;
+        const newSize = Math.max(20, initialSize + dy);
+        selectedCircle.style.width = `${newSize}px`;
+        selectedCircle.style.height = `${newSize}px`;
     }
 
-    // Function to end resizing and send data back to Qualtrics
+    // End resizing
     function onMouseUp() {
         if (!selectedCircle) return;
         selectedCircle.style.border = "none";
-
-        const container = document.getElementById("circle-container");
-        const redRadius = (parseFloat(document.getElementById("circle-red").style.width) / 100) * container.clientWidth / 2;
-        const blueRadius = (parseFloat(document.getElementById("circle-blue").style.width) / 100) * container.clientWidth / 2;
-        const greenRadius = (parseFloat(document.getElementById("circle-green").style.width) / 100) * container.clientWidth / 2;
-
-        // Send the radius data to the parent Qualtrics page
-        const message = {
-            redRadius: redRadius,
-            blueRadius: blueRadius,
-            greenRadius: greenRadius
-        };
-        window.parent.postMessage(message, "*");
-
         selectedCircle = null;
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
     }
 
-    // Attach event listeners to the circles
+    // Attach event listeners to circles
     document.querySelectorAll(".circle").forEach((circle) => {
         circle.addEventListener("mousedown", onMouseDown);
     });
@@ -117,3 +103,4 @@
 
 </body>
 </html>
+
