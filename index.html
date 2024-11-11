@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resizable Circles</title>
+<title>THREE CIRCLES</title>
 <style>
     body {
         display: flex;
@@ -27,7 +27,6 @@
         border-radius: 50%;
         cursor: pointer;
         user-select: none;
-        transition: width 0.2s, height 0.2s;
     }
     #circle-red {
         width: 100px;
@@ -65,9 +64,36 @@
     let startY = 0;
     let initialSize = 0;
 
+    // Function to get the radius of a circle using getComputedStyle
+    function getCircleRadius(circle) {
+        const style = window.getComputedStyle(circle);
+        const width = parseFloat(style.width);
+        return width / 2;
+    }
+
+    // Function to send the radius data to the parent Qualtrics survey
+    function sendRadiusData() {
+        const redCircle = document.getElementById("circle-red");
+        const blueCircle = document.getElementById("circle-blue");
+        const greenCircle = document.getElementById("circle-green");
+
+        const redRadius = getCircleRadius(redCircle);
+        const blueRadius = getCircleRadius(blueCircle);
+        const greenRadius = getCircleRadius(greenCircle);
+
+        const message = {
+            redRadius: redRadius || "N/A",
+            blueRadius: blueRadius || "N/A",
+            greenRadius: greenRadius || "N/A"
+        };
+
+        console.log("Sending radius data to parent:", message);
+        window.parent.postMessage(message, "*");
+    }
+
     // Start resizing the circle
     function onMouseDown(event) {
-        if (event.button !== 0) return; // Only left mouse button
+        if (event.button !== 0) return; // Only respond to left mouse button
         selectedCircle = event.target;
         startY = event.clientY;
         initialSize = selectedCircle.clientWidth;
@@ -86,52 +112,7 @@
         selectedCircle.style.height = `${newSize}px`;
     }
 
-    // End resizing
-    function onMouseUp() {
-        if (!selectedCircle) return;
-        selectedCircle.style.border = "none";
-        selectedCircle = null;
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("mouseup", onMouseUp);
-    }
-
-    // Attach event listeners to circles
-    document.querySelectorAll(".circle").forEach((circle) => {
-        circle.addEventListener("mousedown", onMouseDown);
-    });
-</script>
-
-</body>
-</html>
-
-<script>
-    // Function to get the radius of a circle using getBoundingClientRect()
-    function getCircleRadius(circle) {
-        const rect = circle.getBoundingClientRect();
-        return rect.width / 2;
-    }
-
-    // Function to send the radius data to the parent Qualtrics survey
-    function sendRadiusData() {
-        const redCircle = document.getElementById("circle-red");
-        const blueCircle = document.getElementById("circle-blue");
-        const greenCircle = document.getElementById("circle-green");
-
-        const redRadius = getCircleRadius(redCircle);
-        const blueRadius = getCircleRadius(blueCircle);
-        const greenRadius = getCircleRadius(greenCircle);
-
-        const message = {
-            redRadius: redRadius || 0,
-            blueRadius: blueRadius || 0,
-            greenRadius: greenRadius || 0
-        };
-
-        console.log("Sending radius data to parent:", message);
-        window.parent.postMessage(message, "*");
-    }
-
-    // Call sendRadiusData when resizing ends
+    // End resizing and send data to Qualtrics
     function onMouseUp() {
         if (!selectedCircle) return;
         selectedCircle.style.border = "none";
@@ -143,20 +124,37 @@
         sendRadiusData();
     }
 
-    // Explicitly set the initial size of the circles in JavaScript
-    document.addEventListener("DOMContentLoaded", () => {
+    // Initialize the circle sizes and attach event listeners
+    window.onload = () => {
         const redCircle = document.getElementById("circle-red");
         const blueCircle = document.getElementById("circle-blue");
         const greenCircle = document.getElementById("circle-green");
 
+        // Set initial sizes explicitly in JavaScript
         redCircle.style.width = "100px";
         redCircle.style.height = "100px";
         blueCircle.style.width = "100px";
         blueCircle.style.height = "100px";
         greenCircle.style.width = "100px";
         greenCircle.style.height = "100px";
-    });
+
+        // Log the initial sizes for debugging
+        console.log("Initial red circle radius:", getCircleRadius(redCircle));
+        console.log("Initial blue circle radius:", getCircleRadius(blueCircle));
+        console.log("Initial green circle radius:", getCircleRadius(greenCircle));
+
+        // Attach event listeners
+        redCircle.addEventListener("mousedown", onMouseDown);
+        blueCircle.addEventListener("mousedown", onMouseDown);
+        greenCircle.addEventListener("mousedown", onMouseDown);
+
+        // Send initial radius data to Qualtrics
+        sendRadiusData();
+    };
 </script>
+
+</body>
+</html>
 
 
 
