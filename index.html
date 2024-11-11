@@ -33,7 +33,7 @@
         width: 100px;
         height: 100px;
         top: 20%;
-        left: 30%;
+        left: 50%;
         background-color: red;
     }
     #circle-blue {
@@ -103,4 +103,36 @@
 
 </body>
 </html>
+
+<script>
+    function sendRadiusData() {
+        const container = document.getElementById("circle-container");
+        const redRadius = document.getElementById("circle-red").clientWidth / 2;
+        const blueRadius = document.getElementById("circle-blue").clientWidth / 2;
+        const greenRadius = document.getElementById("circle-green").clientWidth / 2;
+
+        // Prepare the data message
+        const message = {
+            redRadius: redRadius,
+            blueRadius: blueRadius,
+            greenRadius: greenRadius
+        };
+
+        // Send the message to the parent Qualtrics survey
+        window.parent.postMessage(message, "*");
+    }
+
+    // Call sendRadiusData when resizing ends
+    function onMouseUp() {
+        if (!selectedCircle) return;
+        selectedCircle.style.border = "none";
+        selectedCircle = null;
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+
+        // Send the radius data to Qualtrics
+        sendRadiusData();
+    }
+</script>
+
 
