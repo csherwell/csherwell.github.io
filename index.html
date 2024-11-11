@@ -63,43 +63,38 @@
 <script>
     let selectedCircle = null;
     let startY = 0;
-    let startHeight = 0;
+    let startSize = 0;
 
-    // Function to get the radius of a circle in percentage
-    function getRadius(circle) {
-        const container = document.getElementById("circle-container");
-        return (parseFloat(circle.style.width) / 100) * container.clientWidth / 2;
-    }
-
-    // Start resizing the circle
+    // Function to start resizing the circle
     function onMouseDown(event) {
-        if (event.button !== 0) return; // Only left mouse button
+        if (event.button !== 0) return; // Only respond to left mouse button
         selectedCircle = event.target;
         startY = event.clientY;
-        startHeight = parseFloat(selectedCircle.style.height);
+        startSize = parseFloat(selectedCircle.style.width);
         selectedCircle.style.border = "2px dashed yellow";
         window.addEventListener("mousemove", onMouseMove);
         window.addEventListener("mouseup", onMouseUp);
         event.preventDefault();
     }
 
-    // Resize the circle
+    // Function to resize the circle
     function onMouseMove(event) {
         if (!selectedCircle) return;
         const dy = event.clientY - startY;
-        const newSize = Math.max(5, startHeight + (dy / window.innerHeight) * 100);
+        const newSize = Math.max(10, startSize + (dy / window.innerHeight) * 100);
         selectedCircle.style.width = `${newSize}%`;
         selectedCircle.style.height = `${newSize}%`;
     }
 
-    // End resizing and send data to Qualtrics
+    // Function to end resizing and send data back to Qualtrics
     function onMouseUp() {
         if (!selectedCircle) return;
         selectedCircle.style.border = "none";
 
-        const redRadius = getRadius(document.getElementById("circle-red"));
-        const blueRadius = getRadius(document.getElementById("circle-blue"));
-        const greenRadius = getRadius(document.getElementById("circle-green"));
+        const container = document.getElementById("circle-container");
+        const redRadius = (parseFloat(document.getElementById("circle-red").style.width) / 100) * container.clientWidth / 2;
+        const blueRadius = (parseFloat(document.getElementById("circle-blue").style.width) / 100) * container.clientWidth / 2;
+        const greenRadius = (parseFloat(document.getElementById("circle-green").style.width) / 100) * container.clientWidth / 2;
 
         // Send the radius data to the parent Qualtrics page
         const message = {
@@ -114,7 +109,7 @@
         window.removeEventListener("mouseup", onMouseUp);
     }
 
-    // Attach event listeners to circles
+    // Attach event listeners to the circles
     document.querySelectorAll(".circle").forEach((circle) => {
         circle.addEventListener("mousedown", onMouseDown);
     });
