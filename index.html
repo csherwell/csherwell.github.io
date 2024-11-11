@@ -118,7 +118,9 @@
             greenRadius: greenRadius
         };
 
-        // Send the message to the parent Qualtrics survey
+        console.log("Sending message to parent:", message);
+
+        // Send the message to the parent Qualtrics page
         window.parent.postMessage(message, "*");
     }
 
