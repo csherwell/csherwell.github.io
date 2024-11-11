@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>THREE CIRCLES</title>
+<title>Resizable Circles</title>
 <style>
     body {
         display: flex;
@@ -27,12 +27,13 @@
         border-radius: 50%;
         cursor: pointer;
         user-select: none;
+        touch-action: none; /* Prevent default touch actions */
     }
     #circle-red {
         width: 100px;
         height: 100px;
         top: 20%;
-        left: 40%;
+        left: 30%;
         background-color: red;
     }
     #circle-blue {
@@ -91,40 +92,48 @@
         window.parent.postMessage(message, "*");
     }
 
-    // Start resizing the circle
-    function onMouseDown(event) {
-        if (event.button !== 0) return; // Only respond to left mouse button
+    // Start resizing the circle using Pointer Events
+    function onPointerDown(event) {
+        event.preventDefault();
         selectedCircle = event.target;
-        startY = event.clientY;
+        startY = event.clientY || event.touches[0].clientY;
         initialSize = selectedCircle.clientWidth;
         selectedCircle.style.border = "2px dashed yellow";
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mouseup", onMouseUp);
-        event.preventDefault();
+
+        // Capture pointer events for the selected circle
+        selectedCircle.setPointerCapture(event.pointerId);
+        selectedCircle.addEventListener("pointermove", onPointerMove);
+        selectedCircle.addEventListener("pointerup", onPointerUp);
+        selectedCircle.addEventListener("pointercancel", onPointerUp);
     }
 
     // Resize the circle
-    function onMouseMove(event) {
+    function onPointerMove(event) {
         if (!selectedCircle) return;
-        const dy = event.clientY - startY;
+        const currentY = event.clientY || event.touches[0].clientY;
+        const dy = currentY - startY;
         const newSize = Math.max(20, initialSize + dy);
         selectedCircle.style.width = `${newSize}px`;
         selectedCircle.style.height = `${newSize}px`;
     }
 
     // End resizing and send data to Qualtrics
-    function onMouseUp() {
+    function onPointerUp(event) {
         if (!selectedCircle) return;
         selectedCircle.style.border = "none";
-        selectedCircle = null;
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("mouseup", onMouseUp);
+
+        // Stop capturing pointer events
+        selectedCircle.releasePointerCapture(event.pointerId);
+        selectedCircle.removeEventListener("pointermove", onPointerMove);
+        selectedCircle.removeEventListener("pointerup", onPointerUp);
+        selectedCircle.removeEventListener("pointercancel", onPointerUp);
 
         // Send the radius data to Qualtrics
         sendRadiusData();
+        selectedCircle = null;
     }
 
-    // Initialize the circle sizes and attach event listeners
+    // Initialize the circle sizes and attach Pointer Events listeners
     window.onload = () => {
         const redCircle = document.getElementById("circle-red");
         const blueCircle = document.getElementById("circle-blue");
@@ -138,15 +147,10 @@
         greenCircle.style.width = "100px";
         greenCircle.style.height = "100px";
 
-        // Log the initial sizes for debugging
-        console.log("Initial red circle radius:", getCircleRadius(redCircle));
-        console.log("Initial blue circle radius:", getCircleRadius(blueCircle));
-        console.log("Initial green circle radius:", getCircleRadius(greenCircle));
-
-        // Attach event listeners
-        redCircle.addEventListener("mousedown", onMouseDown);
-        blueCircle.addEventListener("mousedown", onMouseDown);
-        greenCircle.addEventListener("mousedown", onMouseDown);
+        // Attach Pointer Events listeners
+        redCircle.addEventListener("pointerdown", onPointerDown);
+        blueCircle.addEventListener("pointerdown", onPointerDown);
+        greenCircle.addEventListener("pointerdown", onPointerDown);
 
         // Send initial radius data to Qualtrics
         sendRadiusData();
@@ -155,6 +159,7 @@
 
 </body>
 </html>
+
 
 
 
