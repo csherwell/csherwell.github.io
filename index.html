@@ -7,26 +7,22 @@
 <style>
     body {
         display: flex;
-        user-select: none;
-        touch-action: none;
         justify-content: center;
         align-items: center;
         height: 100vh;
         margin: 0;
         background-color: #f0f0f0;
     }
-    /* Container for the circles */
     #circle-container {
         position: relative;
-        user-select: none;
-        touch-action: none;
         width: 90vw;
         height: 90vw;
         max-width: 500px;
         max-height: 500px;
-        background-color: #f0f0f0;
+        transform-origin: center;
+        border: 1px solid #ccc;
+        background-color: #fff;
     }
-    /* Common styles for all circles */
     .circle {
         position: absolute;
         border-radius: 50%;
@@ -37,199 +33,130 @@
     #circle-red {
         width: 100px;
         height: 100px;
-        transform: scale(1);
-        transform-origin: center; /* Scale from the center */
-        top: 77%;
-        left: 50%;
+        top: 60%;
+        left: 40%;
         background-color: red;
     }
     #circle-blue {
         width: 100px;
         height: 100px;
-        transform: scale(1);
-        transform-origin: center; /* Scale from the center */
-        top: 33%;
-        left: 10%;
+        top: 20%;
+        left: 20%;
         background-color: blue;
     }
     #circle-green {
         width: 100px;
         height: 100px;
-        transform: scale(1);
-        transform-origin: center;   /* Scale from the center */
-        top: 33%;
-        left: 90%;
+        top: 20%;
+        left: 60%;
         background-color: green;
     }
-  </style>
+</style>
 </head>
 <body>
-    
 
-<a>
-    <div id="circle-container">
-        <div id="circle-red" class="circle"></div>
-        <div id="circle-blue" class="circle"></div>
-        <div id="circle-green" class="circle"></div>
-    </div>
-</a>
-
+<div id="circle-container">
+    <div id="circle-red" class="circle"></div>
+    <div id="circle-blue" class="circle"></div>
+    <div id="circle-green" class="circle"></div>
+</div>
 
 <script>
+    let selectedCircle = null;
+    let startY = 0;
+    let initialSize = 0;
 
-
-// Three Circles resizing and data submission script
-//
-// Written by Glen Millar 2025, liberally employing code from the Three Circle app
-//
-// Free to use and modify under the MIT license
-// https://opensource.org/license/mit/
-//
-
-
-let isResizing = false; 
-let initialScale = 1;
-let startX, startY;
-let selectedCircle = null;
-
-
-    // Function to get the current scale of a circle
-function getScale(circle) {
-    const computedTransform = window.getComputedStyle(circle).transform;
-    const scaleMatch = computedTransform.match(/matrix\(([^)]+)\)/);
-    if (scaleMatch) {
-        const values = scaleMatch[1].split(', ');
-        return parseFloat(values[0]); // Assuming uniform scaling
+    // Function to get the radius of a circle using getComputedStyle
+    function getCircleRadius(circle) {
+        const style = window.getComputedStyle(circle);
+        const width = parseFloat(style.width);
+        return width / 2;
     }
-    return 1;
-}
 
+    // Function to send the radius data to the parent Qualtrics survey
+    function sendRadiusData() {
+        const redCircle = document.getElementById("circle-red");
+        const blueCircle = document.getElementById("circle-blue");
+        const greenCircle = document.getElementById("circle-green");
 
-// Function to submit the sizes of the circles
-function submitSizes() {
-    //  Get the current scales of each circle
-    const redCircle = document.getElementById('circle-red');
-    const blueCircle = document.getElementById('circle-blue');
-    const greenCircle = document.getElementById('circle-green');
+        const redRadius = getCircleRadius(redCircle);
+        const blueRadius = getCircleRadius(blueCircle);
+        const greenRadius = getCircleRadius(greenCircle);
 
+        const message = {
+            redRadius: redRadius || "N/A",
+            blueRadius: blueRadius || "N/A",
+            greenRadius: greenRadius || "N/A"
+        };
 
-    // Get computed styles to extract the transform property
-    const redTransform = window.getComputedStyle(redCircle).transform;
-    const blueTransform = window.getComputedStyle(blueCircle).transform;
-    const greenTransform = window.getComputedStyle(greenCircle).transform;
-   
-
-    // Extract scale values from the transform matrices
-    const redScale = getScale(redCircle);
-    const blueScale = getScale(blueCircle);
-    const greenScale = getScale(greenCircle);
-
-
-    // Prepare the message to send
-    const message = {
-        redCircle: redScale || "N/A",
-        blueCircle: blueScale || "N/A",
-        greenCircle: greenScale || "N/A"
-    };
-    console.log("submitting circle size data to Qualtrics:", message);   // For debugging
-    window.parent.postMessage(message, "*"); // Send the message to the parent window
-}
-
-
-
-// Mouse event handlers
-//
-// Mousedown event to start resizing
-//
-function onMouseDown(e) { // Only start if a circle is clicked
-    if (!e.target.classList.contains('circle')) return;
-    e.preventDefault();
-    isResizing = true;
-    selectedCircle = e.target;
-    startX = e.clientX;
-    startY = e.clientY;
-
-    // Extract the current scale from the transform style
-    const computedTransform = window.getComputedStyle(selectedCircle).transform;
-    const scaleMatch = computedTransform.match(/matrix\(([^)]+)\)/); // Match values inside matrix()
-    if (scaleMatch) {
-        const values = scaleMatch[1].split(', '); // For a 2D or 3D matrix, scaleX is the first value.
-        initialScale = parseFloat(values[0]); 
-    } else {
-        initialScale = 1;
+        console.log("Sending radius data to parent:", message);
+        window.parent.postMessage(message, "*");
     }
-    selectedCircle.style.cursor = 'grabbing';
-}
 
-// Mousemove event to resize the circle
-function onMouseMove(e) {
-    if (!isResizing || !selectedCircle) return;
-    e.preventDefault();
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
-    const delta = Math.max(deltaX, deltaY);
-    let newScale = initialScale + delta / 200;
-    newScale = Math.max(0.25, Math.min(newScale, 10));
-    selectedCircle.style.transform = `scale(${newScale})`;
-}
+    // Start resizing the circle using Pointer Events
+    function onPointerDown(event) {
+        event.preventDefault();
+        selectedCircle = event.target;
+        startY = event.clientY || event.touches[0].clientY;
+        initialSize = selectedCircle.clientWidth;
+        selectedCircle.style.border = "2px dashed yellow";
 
-// Mouseup event to stop resizing and submit sizes
-function onMouseUp(e) {
-    if (isResizing) {
-        isResizing = false;
-        if (selectedCircle) {
-            selectedCircle.style.cursor = 'pointer';
-        }
+        // Capture pointer events for the selected circle
+        selectedCircle.setPointerCapture(event.pointerId);
+        selectedCircle.addEventListener("pointermove", onPointerMove);
+        selectedCircle.addEventListener("pointerup", onPointerUp);
+        selectedCircle.addEventListener("pointercancel", onPointerUp);
+    }
+
+    // Resize the circle
+    function onPointerMove(event) {
+        if (!selectedCircle) return;
+        const currentY = event.clientY || event.touches[0].clientY;
+        const dy = currentY - startY;
+        const newSize = Math.max(20, initialSize + dy);
+        selectedCircle.style.width = `${newSize}px`;
+        selectedCircle.style.height = `${newSize}px`;
+    }
+
+    // End resizing and send data to Qualtrics
+    function onPointerUp(event) {
+        if (!selectedCircle) return;
+        selectedCircle.style.border = "none";
+
+        // Stop capturing pointer events
+        selectedCircle.releasePointerCapture(event.pointerId);
+        selectedCircle.removeEventListener("pointermove", onPointerMove);
+        selectedCircle.removeEventListener("pointerup", onPointerUp);
+        selectedCircle.removeEventListener("pointercancel", onPointerUp);
+
+        // Send the radius data to Qualtrics
+        sendRadiusData();
         selectedCircle = null;
     }
-    submitSizes();
-}
 
-// Set up event listeners for circles and document
-function setEventListeners () {
-    const circles = document.getElementsByClassName('circle');
-    for (let i = 0; i < circles.length; i++) {
-        circles[i].addEventListener("mousedown", onMouseDown);
-    }
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-}
+    // Initialize the circle sizes and attach Pointer Events listeners
+    window.onload = () => {
+        const redCircle = document.getElementById("circle-red");
+        const blueCircle = document.getElementById("circle-blue");
+        const greenCircle = document.getElementById("circle-green");
 
+        // Set initial sizes explicitly in JavaScript
+        redCircle.style.width = "100px";
+        redCircle.style.height = "100px";
+        blueCircle.style.width = "100px";
+        blueCircle.style.height = "100px";
+        greenCircle.style.width = "100px";
+        greenCircle.style.height = "100px";
 
-// Initialize event listeners on page load
-window.onload = () => {
-    setEventListeners();
+        // Attach Pointer Events listeners
+        redCircle.addEventListener("pointerdown", onPointerDown);
+        blueCircle.addEventListener("pointerdown", onPointerDown);
+        greenCircle.addEventListener("pointerdown", onPointerDown);
 
-    // Deactivated code
-    //
-    // Checks for existing cookie and set if not present
-    //
-    // let name = "circleSurveyData";
-    // const checkCookies = setInterval(() => {
-    //     const cookieName = name + '=';
-    //     const decodedCookie = decodeURIComponent(document.cookie);
-    //     const cookieArray = decodedCookie.split(';');
-    //     let found = false;
-    //     for (let i = 0; i < cookieArray.length; i++) {
-    //         let cookie = cookieArray[i].trim();
-    //         if (cookie.indexOf(cookieName) === 0) {
-    //             found = true;
-    //             break;
-    //         }
-    //     }
-    //     if (!found) {
-    //         document.cookie = `${name}=; path=/; max-age=${60*60*24*30}`; // Expires in 30 days
-    //         clearInterval(checkCookies);
-    //     }
-    // }, 100);
-    //
-    // 
-}
-
+        // Send initial radius data to Qualtrics
+        sendRadiusData();
+    };
 </script>
+
 </body>
 </html>
-
-
-
-
