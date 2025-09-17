@@ -35,7 +35,6 @@
         top: 60%;
         left: 40%;
         background-color: red;
-
     }
     #circle-blue {
         width: 100px;
@@ -62,9 +61,18 @@
 </div>
 
 <script>
+
+
+
+// Three Circles code by Chase S Sherwell 2025
+    
     let selectedCircle = null;
     let startY = 0;
     let initialSize = 0;
+
+    // NEW: store the center so we can keep it fixed while resizing
+    let centerX = 0;
+    let centerY = 0;
 
     // Function to get the radius of a circle using getComputedStyle
     function getCircleRadius(circle) {
@@ -97,26 +105,46 @@
     function onPointerDown(event) {
         event.preventDefault();
         selectedCircle = event.target;
-        startY = event.clientY || event.touches[0].clientY;
+
+        // Pointer Events normalize input; keep a touch fallback just in case
+        startY = (event.clientY != null)
+            ? event.clientY
+            : (event.touches && event.touches[0] ? event.touches[0].clientY : 0);
+
         initialSize = selectedCircle.clientWidth;
+
+        // Capture the current center (relative to the container)
+        centerX = selectedCircle.offsetLeft + initialSize / 2;
+        centerY = selectedCircle.offsetTop + initialSize / 2;
+
         selectedCircle.style.border = "2px dashed yellow";
 
         // Capture pointer events for the selected circle
-        selectedCircle.setPointerCapture(event.pointerId);
+        if (event.pointerId != null) selectedCircle.setPointerCapture(event.pointerId);
         selectedCircle.addEventListener("pointermove", onPointerMove);
         selectedCircle.addEventListener("pointerup", onPointerUp);
         selectedCircle.addEventListener("pointercancel", onPointerUp);
     }
 
-    // Resize the circle
+    // Resize the circle from its center
     function onPointerMove(event) {
         if (!selectedCircle) return;
-        const currentY = event.clientY || event.touches[0].clientY;
+
+        const currentY = (event.clientY != null)
+            ? event.clientY
+            : (event.touches && event.touches[0] ? event.touches[0].clientY : startY);
+
         const dy = currentY - startY;
         const newSize = Math.max(20, initialSize + dy);
+
+        // Apply new size
         selectedCircle.style.width = `${newSize}px`;
         selectedCircle.style.height = `${newSize}px`;
-        transform-origin: center;
+
+        // Reposition so the center stays fixed
+        // Switch to pixel positioning after first resize (intentional)
+        selectedCircle.style.left = `${centerX - newSize / 2}px`;
+        selectedCircle.style.top  = `${centerY - newSize / 2}px`;
     }
 
     // End resizing and send data to Qualtrics
@@ -125,7 +153,7 @@
         selectedCircle.style.border = "none";
 
         // Stop capturing pointer events
-        selectedCircle.releasePointerCapture(event.pointerId);
+        if (event.pointerId != null) selectedCircle.releasePointerCapture(event.pointerId);
         selectedCircle.removeEventListener("pointermove", onPointerMove);
         selectedCircle.removeEventListener("pointerup", onPointerUp);
         selectedCircle.removeEventListener("pointercancel", onPointerUp);
