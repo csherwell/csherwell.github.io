@@ -36,6 +36,8 @@
         top: 60%;
         left: 40%;
         background-color: red;
+transform-origin: center;
+
     }
     #circle-blue {
         width: 100px;
@@ -43,6 +45,7 @@
         top: 20%;
         left: 20%;
         background-color: blue;
+        transform-origin: center;
     }
     #circle-green {
         width: 100px;
@@ -50,6 +53,7 @@
         top: 20%;
         left: 60%;
         background-color: green;
+        transform-origin: center;
     }
 </style>
 </head>
@@ -116,6 +120,7 @@
         const newSize = Math.max(20, initialSize + dy);
         selectedCircle.style.width = `${newSize}px`;
         selectedCircle.style.height = `${newSize}px`;
+        transform-origin: center;
     }
 
     // End resizing and send data to Qualtrics
