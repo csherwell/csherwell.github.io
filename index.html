@@ -1,116 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THREE CIRCLES</title>
 <style>
-  html, body { height: 100%; margin: 0; }
-  body {
-    display: flex; justify-content: center; align-items: center;
-    background: #f0f0f0; font-family: system-ui, sans-serif;
-  }
-  #circle-container {
-    position: relative; width: 90vw; height: 90vw; max-width: 500px; max-height: 500px;
-    border: 1px solid #ccc; background: #fff;
-  }
-  .circle { position: absolute; border-radius: 50%; cursor: pointer; user-select: none; touch-action: none; }
-  #circle-red   { width: 100px; height: 100px; top: 60%; left: 40%; background: red; }
-  #circle-blue  { width: 100px; height: 100px; top: 20%; left: 20%; background: blue; }
-  #circle-green { width: 100px; height: 100px; top: 20%; left: 60%; background: green; }
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+    }
+    #circle-container {
+        position: relative;
+        width: 90vw;
+        height: 90vw;
+        max-width: 500px;
+        max-height: 500px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+    }
+    .circle {
+        position: absolute;
+        border-radius: 50%;
+        cursor: pointer;
+        user-select: none;
+        touch-action: none; /* Prevent default touch actions */
+    }
+    #circle-red {
+        width: 100px;
+        height: 100px;
+        top: 60%;
+        left: 40%;
+        background-color: red;
+    }
+    #circle-blue {
+        width: 100px;
+        height: 100px;
+        top: 20%;
+        left: 20%;
+        background-color: blue;
+    }
+    #circle-green {
+        width: 100px;
+        height: 100px;
+        top: 20%;
+        left: 60%;
+        background-color: green;
+    }
 </style>
 </head>
 <body>
-  <div id="circle-container">
+
+<div id="circle-container">
     <div id="circle-red" class="circle"></div>
     <div id="circle-blue" class="circle"></div>
     <div id="circle-green" class="circle"></div>
-  </div>
+</div>
 
 <script>
-// Replace with your GAS Web App URL
-const ENDPOINT = "AKfycbyj-dZ-SZ1DXrxcUZsMWOx4gPBmV29aTu5VmDN3DmqFBczgXAPQypOR_g6u-yVq-h9ISg";
 
-const circles = {
-  red:   document.getElementById("circle-red"),
-  blue:  document.getElementById("circle-blue"),
-  green: document.getElementById("circle-green")
-};
 
-let selected = null, startY = 0, initialSize = 0, centerX = 0, centerY = 0;
 
-function getRadius(el) {
-  const w = parseFloat(getComputedStyle(el).width);
-  return w / 2;
-}
+// Three Circles code by Chase S Sherwell 2025
+    
+    let selectedCircle = null;
+    let startY = 0;
+    let initialSize = 0;
 
-function getRID() {
-  const p = new URLSearchParams(location.search);
-  return p.get("rid") || "";
-}
+    // NEW: store the center so we can keep it fixed while resizing
+    let centerX = 0;
+    let centerY = 0;
 
-// Write radii to server using CORS-free image beacon
-function writeRadii() {
-  const payload = new URLSearchParams({
-    mode: "write",
-    rid: getRID(),
-    red:   String(getRadius(circles.red)),
-    blue:  String(getRadius(circles.blue)),
-    green: String(getRadius(circles.green)),
-    t: String(Date.now())
-  }).toString();
+    // Function to get the radius of a circle using getComputedStyle
+    function getCircleRadius(circle) {
+        const style = window.getComputedStyle(circle);
+        const width = parseFloat(style.width);
+        return width / 2;
+    }
 
-  const img = new Image();
-  img.src = `${ENDPOINT}?${payload}`;
-}
+    // Function to send the radius data to the parent Qualtrics survey
+    function sendRadiusData() {
+        const redCircle = document.getElementById("circle-red");
+        const blueCircle = document.getElementById("circle-blue");
+        const greenCircle = document.getElementById("circle-green");
 
-// Resize from centre
-function onPointerDown(e) {
-  if (!(e.target.classList && e.target.classList.contains("circle"))) return;
-  e.preventDefault();
-  selected = e.target;
-  startY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? 0;
-  initialSize = selected.clientWidth;
-  centerX = selected.offsetLeft + initialSize / 2;
-  centerY = selected.offsetTop  + initialSize / 2;
-  if (e.pointerId != null) selected.setPointerCapture(e.pointerId);
-  selected.addEventListener("pointermove", onPointerMove);
-  selected.addEventListener("pointerup", onPointerUp);
-  selected.addEventListener("pointercancel", onPointerUp);
-  selected.style.outline = "2px dashed #ff0";
-}
+        const redRadius = getCircleRadius(redCircle);
+        const blueRadius = getCircleRadius(blueCircle);
+        const greenRadius = getCircleRadius(greenCircle);
 
-function onPointerMove(e) {
-  if (!selected) return;
-  const currentY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? startY;
-  const dy = currentY - startY;
-  const newSize = Math.max(20, initialSize + dy);
-  selected.style.width  = `${newSize}px`;
-  selected.style.height = `${newSize}px`;
-  selected.style.left   = `${centerX - newSize / 2}px`;
-  selected.style.top    = `${centerY - newSize / 2}px`;
-}
+        const message = {
+            redRadius: redRadius || "N/A",
+            blueRadius: blueRadius || "N/A",
+            greenRadius: greenRadius || "N/A"
+        };
 
-function onPointerUp(e) {
-  if (!selected) return;
-  if (e.pointerId != null) selected.releasePointerCapture(e.pointerId);
-  selected.removeEventListener("pointermove", onPointerMove);
-  selected.removeEventListener("pointerup", onPointerUp);
-  selected.removeEventListener("pointercancel", onPointerUp);
-  selected.style.outline = "none";
-  writeRadii();
-  selected = null;
-}
+        console.log("Sending radius data to parent:", message);
+        window.parent.postMessage(message, "*");
+    }
 
-function init() {
-  Object.values(circles).forEach(el => {
-    el.style.width = "100px"; el.style.height = "100px";
-    el.addEventListener("pointerdown", onPointerDown, { passive: false });
-  });
-  writeRadii(); // save initial sizes in case participant never drags
-}
+    // Start resizing the circle using Pointer Events
+    function onPointerDown(event) {
+        event.preventDefault();
+        selectedCircle = event.target;
 
-window.addEventListener("load", init);
+        // Pointer Events normalize input; keep a touch fallback just in case
+        startY = (event.clientY != null)
+            ? event.clientY
+            : (event.touches && event.touches[0] ? event.touches[0].clientY : 0);
+
+        initialSize = selectedCircle.clientWidth;
+
+        // Capture the current center (relative to the container)
+        centerX = selectedCircle.offsetLeft + initialSize / 2;
+        centerY = selectedCircle.offsetTop + initialSize / 2;
+
+        selectedCircle.style.border = "2px dashed yellow";
+
+        // Capture pointer events for the selected circle
+        if (event.pointerId != null) selectedCircle.setPointerCapture(event.pointerId);
+        selectedCircle.addEventListener("pointermove", onPointerMove);
+        selectedCircle.addEventListener("pointerup", onPointerUp);
+        selectedCircle.addEventListener("pointercancel", onPointerUp);
+    }
+
+    // Resize the circle from its center
+    function onPointerMove(event) {
+        if (!selectedCircle) return;
+
+        const currentY = (event.clientY != null)
+            ? event.clientY
+            : (event.touches && event.touches[0] ? event.touches[0].clientY : startY);
+
+        const dy = currentY - startY;
+        const newSize = Math.max(20, initialSize + dy);
+
+        // Apply new size
+        selectedCircle.style.width = `${newSize}px`;
+        selectedCircle.style.height = `${newSize}px`;
+
+        // Reposition so the center stays fixed
+        // Switch to pixel positioning after first resize (intentional)
+        selectedCircle.style.left = `${centerX - newSize / 2}px`;
+        selectedCircle.style.top  = `${centerY - newSize / 2}px`;
+    }
+
+    // End resizing and send data to Qualtrics
+    function onPointerUp(event) {
+        if (!selectedCircle) return;
+        selectedCircle.style.border = "none";
+
+        // Stop capturing pointer events
+        if (event.pointerId != null) selectedCircle.releasePointerCapture(event.pointerId);
+        selectedCircle.removeEventListener("pointermove", onPointerMove);
+        selectedCircle.removeEventListener("pointerup", onPointerUp);
+        selectedCircle.removeEventListener("pointercancel", onPointerUp);
+
+        // Send the radius data to Qualtrics
+        sendRadiusData();
+        selectedCircle = null;
+    }
+
+    // Initialize the circle sizes and attach Pointer Events listeners
+    window.onload = () => {
+        const redCircle = document.getElementById("circle-red");
+        const blueCircle = document.getElementById("circle-blue");
+        const greenCircle = document.getElementById("circle-green");
+
+        // Set initial sizes explicitly in JavaScript
+        redCircle.style.width = "100px";
+        redCircle.style.height = "100px";
+        blueCircle.style.width = "100px";
+        blueCircle.style.height = "100px";
+        greenCircle.style.width = "100px";
+        greenCircle.style.height = "100px";
+
+        // Attach Pointer Events listeners
+        redCircle.addEventListener("pointerdown", onPointerDown);
+        blueCircle.addEventListener("pointerdown", onPointerDown);
+        greenCircle.addEventListener("pointerdown", onPointerDown);
+
+        // Send initial radius data to Qualtrics
+        sendRadiusData();
+    };
 </script>
+
 </body>
 </html>
